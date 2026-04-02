@@ -107,7 +107,7 @@ Swagger UI (Development) will be available at:
 
 ## 5) Why HTTP-only cookies are commonly used (industry standard)
 
-Even though this project uses **JWT tokens in the `Authorization` header**, it’s important to understand why **HTTP-only cookies** are widely used in industry for authentication:
+
 
 - **HTTP-only cookies cannot be accessed by JavaScript**, which helps protect session tokens from **XSS (Cross-Site Scripting)** attacks.
 - If an authentication token is stored somewhere JavaScript can read (like `localStorage`), then an XSS vulnerability could allow attackers to steal it.

@@ -1,0 +1,171 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Cryptography;
+using System.Security.Claims;
+using System.Text;
+using CourseManagement.Api.Data;
+using CourseManagement.Api.DTOs;
+using CourseManagement.Api.Interfaces;
+using CourseManagement.Api.Models.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+
+namespace CourseManagement.Api.Services;
+
+public class AuthorizationService : IAuthorizationService
+{
+    private readonly AppDbContext _context;
+    private readonly IConfiguration _configuration;
+
+    public AuthorizationService(AppDbContext context, IConfiguration configuration)
+    {
+        _context = context;
+        _configuration = configuration;
+    }
+
+    public async Task<LoginResponseDTO?> LoginAsync(LoginDTO loginDto)
+    {
+        var user = await _context.AppUsers
+            .FirstOrDefaultAsync(u => u.Username == loginDto.Username);
+
+        if (user == null)
+        {
+            return null;
+        }
+
+        if (!VerifyPassword(loginDto.Password, user.PasswordHash, out var needsHashUpgrade))
+        {
+            return null;
+        }
+
+        if (needsHashUpgrade)
+        {
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(loginDto.Password);
+        }
+
+        var expires = DateTime.UtcNow.AddHours(2);
+        var refreshToken = await CreateAndSaveRefreshTokenAsync(user);
+
+        await _context.SaveChangesAsync();
+
+        return new LoginResponseDTO
+        {
+            Token = GenerateToken(user.Username, user.Role, expires),
+            Expires = expires,
+            RefreshToken = refreshToken.Token,
+            RefreshTokenExpires = refreshToken.ExpiresAtUtc
+        };
+    }
+
+    public async Task<LoginResponseDTO?> RefreshTokenAsync(RefreshTokenRequestDTO request)
+    {
+        var existingToken = await _context.RefreshTokens
+            .Include(rt => rt.AppUser)
+            .FirstOrDefaultAsync(rt => rt.Token == request.RefreshToken);
+
+        if (existingToken == null || existingToken.IsRevoked || existingToken.ExpiresAtUtc <= DateTime.UtcNow)
+        {
+            return null;
+        }
+
+        existingToken.IsRevoked = true;
+
+        var newRefreshToken = await CreateAndSaveRefreshTokenAsync(existingToken.AppUser);
+        var accessTokenExpires = DateTime.UtcNow.AddHours(2);
+
+        await _context.SaveChangesAsync();
+
+        return new LoginResponseDTO
+        {
+            Token = GenerateToken(existingToken.AppUser.Username, existingToken.AppUser.Role, accessTokenExpires),
+            Expires = accessTokenExpires,
+            RefreshToken = newRefreshToken.Token,
+            RefreshTokenExpires = newRefreshToken.ExpiresAtUtc
+        };
+    }
+
+    public async Task<bool> RevokeRefreshTokenAsync(RevokeTokenRequestDTO request)
+    {
+        var token = await _context.RefreshTokens
+            .FirstOrDefaultAsync(rt => rt.Token == request.RefreshToken);
+
+        if (token == null || token.IsRevoked)
+        {
+            return false;
+        }
+
+        token.IsRevoked = true;
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    private string GenerateToken(string username, string role, DateTime expiresUtc)
+    {
+        var key = _configuration["Jwt:Key"];
+        var issuer = _configuration["Jwt:Issuer"];
+        var audience = _configuration["Jwt:Audience"];
+
+        if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(issuer) || string.IsNullOrWhiteSpace(audience))
+        {
+            throw new InvalidOperationException("JWT settings are missing in configuration.");
+        }
+
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
+        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.Name, username),
+            new Claim(ClaimTypes.Role, role)
+        };
+
+        var token = new JwtSecurityToken(
+            issuer: issuer,
+            audience: audience,
+            claims: claims,
+            expires: expiresUtc,
+            signingCredentials: credentials);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    private static bool VerifyPassword(string providedPassword, string storedHash, out bool needsHashUpgrade)
+    {
+        needsHashUpgrade = false;
+
+        if (string.IsNullOrWhiteSpace(storedHash))
+        {
+            return false;
+        }
+
+        // Supports transition from seeded plain-text passwords to BCrypt hashes.
+        if (!storedHash.StartsWith("$2", StringComparison.Ordinal))
+        {
+            needsHashUpgrade = string.Equals(storedHash, providedPassword, StringComparison.Ordinal);
+            return needsHashUpgrade;
+        }
+
+        return BCrypt.Net.BCrypt.Verify(providedPassword, storedHash);
+    }
+
+    private async Task<RefreshToken> CreateAndSaveRefreshTokenAsync(AppUser user)
+    {
+        var refreshToken = new RefreshToken
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            AppUserId = user.Id,
+            Token = GenerateRefreshTokenValue(),
+            CreatedAtUtc = DateTime.UtcNow,
+            ExpiresAtUtc = DateTime.UtcNow.AddDays(7),
+            IsRevoked = false
+        };
+
+        await _context.RefreshTokens.AddAsync(refreshToken);
+        return refreshToken;
+    }
+
+    private static string GenerateRefreshTokenValue()
+    {
+        var bytes = RandomNumberGenerator.GetBytes(64);
+        return Convert.ToBase64String(bytes);
+    }
+}

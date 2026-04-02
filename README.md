@@ -177,6 +177,10 @@ Example filename:
 
 ---
 
+Chat for the AI assistant used 
+https://gemini.google.com/share/86f0bacef64b
+
+
 ## Project structure (overview)
 - `controllers/` — API controllers and routes
 - `services/` — service layer (business logic)

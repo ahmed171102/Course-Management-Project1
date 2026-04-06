@@ -27,6 +27,8 @@ public class AuthenticationController : ControllerBase
             return Unauthorized("Invalid username or password.");
         }
 
+        Response.Headers.Append("Authorization", $"Bearer {result.Token}");
+
         return Ok(result);
     }
 
@@ -39,6 +41,8 @@ public class AuthenticationController : ControllerBase
         {
             return Unauthorized("Invalid or expired refresh token.");
         }
+
+        Response.Headers.Append("Authorization", $"Bearer {result.Token}");
 
         return Ok(result);
     }

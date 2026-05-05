@@ -1,0 +1,94 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  flex: 1;
+
+  a {
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 14px;
+    transition: color 0.2s ease;
+    position: relative;
+
+    &:hover {
+      color: var(--accent);
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--accent);
+      transition: width 0.2s ease;
+    }
+
+    &:hover::after {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 768px) {
+    gap: 16px;
+    flex-direction: column;
+    width: 100%;
+
+    a {
+      display: block;
+      padding: 8px 0;
+
+      &::after {
+        display: none;
+      }
+
+      &:hover {
+        padding-left: 8px;
+      }
+    }
+  }
+}
+
+.navbar-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+
+  button {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    background: var(--danger);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    button {
+      flex: 1;
+    }
+  }
+}

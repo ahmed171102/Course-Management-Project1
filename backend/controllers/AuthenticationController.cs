@@ -33,6 +33,21 @@ public class AuthenticationController : ControllerBase
     }
 
     [AllowAnonymous]
+    [HttpPost("register")]
+    public async Task<ActionResult<LoginResponseDTO>> Register([FromBody] RegisterDTO dto)
+    {
+        var result = await _authorizationService.RegisterAsync(dto);
+        if (result is null)
+        {
+            return Conflict("Username already exists.");
+        }
+
+        Response.Headers.Append("Authorization", $"Bearer {result.Token}");
+
+        return Ok(result);
+    }
+
+    [AllowAnonymous]
     [HttpPost("refresh")]
     public async Task<ActionResult<LoginResponseDTO>> Refresh([FromBody] RefreshTokenRequestDTO dto)
     {

@@ -1,200 +1,183 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import apiClient from "../services/apiClient";
-import { getUserRole } from "../services/authService";
-
-function isAdminRole(role) {
-  return String(role || "").trim().toLowerCase() === "admin";
-}
+import { register, saveAuthData } from "../services/authService";
+import toast from "react-hot-toast";
+import "./Auth.css";
 
 export default function Register() {
   const navigate = useNavigate();
-  const userRole = getUserRole();
-  const canCreateInstructor = useMemo(() => isAdminRole(userRole), [userRole]);
 
-  const [accountType, setAccountType] = useState("student");
-
-  const [studentFullName, setStudentFullName] = useState("");
-  const [studentEmail, setStudentEmail] = useState("");
-
-  const [instructorName, setInstructorName] = useState("");
-  const [instructorEmail, setInstructorEmail] = useState("");
-  const [instructorBio, setInstructorBio] = useState("");
-  const [instructorOfficeLocation, setInstructorOfficeLocation] = useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState("User");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
-    setMessage("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      toast.error("Passwords do not match.");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      if (accountType === "student") {
-        const payload = {
-          fullName: studentFullName,
-          email: studentEmail,
-        };
-
-        await apiClient.post("/students", payload);
-        setMessage("Student registered successfully.");
-        setStudentFullName("");
-        setStudentEmail("");
-        return;
-      }
-
-      if (accountType === "instructor") {
-        if (!canCreateInstructor) {
-          setError("Instructor registration requires an Admin login.");
-          return;
-        }
-
-        const payload = {
-          name: instructorName,
-          email: instructorEmail,
-          bio: instructorBio,
-          officeLocation: instructorOfficeLocation,
-        };
-
-        await apiClient.post("/instructors", payload);
-        setMessage("Instructor registered successfully.");
-        setInstructorName("");
-        setInstructorEmail("");
-        setInstructorBio("");
-        setInstructorOfficeLocation("");
-      }
+      const result = await register(username, email, password, role);
+      saveAuthData(result);
+      toast.success(`Account created! Welcome, ${result.username}!`);
+      navigate("/dashboard", { replace: true });
     } catch (err) {
-      setError(err?.response?.data || err.message || "Registration failed.");
+      const msg = err?.response?.data;
+      const errorMsg = typeof msg === "string" ? msg : err.message || "Registration failed.";
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <section>
-      <h2>Register</h2>
+    <div className="auth-page">
+      <div className="auth-container animate-fade">
+        {/* Left — Branding */}
+        <div className="auth-brand">
+          <div className="auth-brand-content">
+            <div className="auth-logo">🎓</div>
+            <h1>Join the Platform</h1>
+            <p>
+              Create your account and start managing your academic journey.
+            </p>
+            <div className="auth-features">
+              <div className="auth-feature">
+                <span className="feature-icon">👨‍🎓</span>
+                <span>Student: Browse & enroll in courses</span>
+              </div>
+              <div className="auth-feature">
+                <span className="feature-icon">📚</span>
+                <span>Instructor: Manage your courses</span>
+              </div>
+              <div className="auth-feature">
+                <span className="feature-icon">🔧</span>
+                <span>Admin: Full system control</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
-      <div className="flex wrap" style={{ marginBottom: 12 }}>
-        <button
-          type="button"
-          onClick={() => setAccountType("student")}
-          disabled={loading}
-          style={{ opacity: accountType === "student" ? 1 : 0.75 }}
-        >
-          New Student
-        </button>
+        {/* Right — Form */}
+        <div className="auth-form-wrapper">
+          <div className="auth-form-header">
+            <h2>Create Account</h2>
+            <p>Fill in your details to get started</p>
+          </div>
 
-        <button
-          type="button"
-          onClick={() => setAccountType("instructor")}
-          disabled={loading || !canCreateInstructor}
-          title={!canCreateInstructor ? "Admin login required" : undefined}
-          style={{ opacity: accountType === "instructor" ? 1 : 0.75 }}
-        >
-          New Instructor
-        </button>
+          <form onSubmit={handleSubmit} className="auth-form" id="register-form">
+            <div className="form-group">
+              <label htmlFor="reg-username">Username</label>
+              <input
+                id="reg-username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Choose a username"
+                required
+                minLength={3}
+                autoFocus
+              />
+            </div>
 
-        <button
-          type="button"
-          onClick={() => navigate("/login")}
-          disabled={loading}
-        >
-          Back to Login
-        </button>
+            <div className="form-group">
+              <label htmlFor="reg-email">Email</label>
+              <input
+                id="reg-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                required
+              />
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="reg-password">Password</label>
+                <input
+                  id="reg-password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Min 6 characters"
+                  required
+                  minLength={6}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="reg-confirm">Confirm Password</label>
+                <input
+                  id="reg-confirm"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Repeat password"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="reg-role">Account Type</label>
+              <div className="role-selector">
+                {[
+                  { value: "User", label: "Student", icon: "👨‍🎓", desc: "Browse & enroll in courses" },
+                  { value: "Instructor", label: "Instructor", icon: "📚", desc: "Teach & manage courses" },
+                  { value: "Admin", label: "Admin", icon: "🔧", desc: "Full system access" },
+                ].map((r) => (
+                  <button
+                    key={r.value}
+                    type="button"
+                    className={`role-option ${role === r.value ? "selected" : ""}`}
+                    onClick={() => setRole(r.value)}
+                  >
+                    <span className="role-option-icon">{r.icon}</span>
+                    <span className="role-option-label">{r.label}</span>
+                    <span className="role-option-desc">{r.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {error && (
+              <div className="alert alert-error">
+                <span>⚠️</span> {error}
+              </div>
+            )}
+
+            <button type="submit" className="btn-primary auth-submit" disabled={loading} id="register-submit">
+              {loading ? (
+                <>
+                  <span className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }}></span>
+                  Creating account...
+                </>
+              ) : (
+                "Create Account"
+              )}
+            </button>
+          </form>
+
+          <div className="auth-footer">
+            <p>
+              Already have an account?{" "}
+              <Link to="/login" id="login-link">Sign In</Link>
+            </p>
+          </div>
+        </div>
       </div>
-
-      {!canCreateInstructor && (
-        <p style={{ marginBottom: 12 }}>
-          Instructor registration is Admin-only.
-        </p>
-      )}
-
-      <form onSubmit={handleSubmit} style={{ maxWidth: 480 }}>
-        {accountType === "student" && (
-          <>
-            <div style={{ marginBottom: 8 }}>
-              <label>Full Name</label>
-              <input
-                value={studentFullName}
-                onChange={(e) => setStudentFullName(e.target.value)}
-                style={{ width: "100%" }}
-                required
-                minLength={2}
-              />
-            </div>
-
-            <div style={{ marginBottom: 8 }}>
-              <label>Email</label>
-              <input
-                value={studentEmail}
-                onChange={(e) => setStudentEmail(e.target.value)}
-                style={{ width: "100%" }}
-                required
-                type="email"
-              />
-            </div>
-          </>
-        )}
-
-        {accountType === "instructor" && (
-          <>
-            <div style={{ marginBottom: 8 }}>
-              <label>Name</label>
-              <input
-                value={instructorName}
-                onChange={(e) => setInstructorName(e.target.value)}
-                style={{ width: "100%" }}
-                required
-                minLength={2}
-              />
-            </div>
-
-            <div style={{ marginBottom: 8 }}>
-              <label>Email</label>
-              <input
-                value={instructorEmail}
-                onChange={(e) => setInstructorEmail(e.target.value)}
-                style={{ width: "100%" }}
-                required
-                type="email"
-              />
-            </div>
-
-            <div style={{ marginBottom: 8 }}>
-              <label>Bio</label>
-              <textarea
-                value={instructorBio}
-                onChange={(e) => setInstructorBio(e.target.value)}
-                style={{ width: "100%" }}
-                rows={3}
-              />
-            </div>
-
-            <div style={{ marginBottom: 8 }}>
-              <label>Office Location</label>
-              <input
-                value={instructorOfficeLocation}
-                onChange={(e) => setInstructorOfficeLocation(e.target.value)}
-                style={{ width: "100%" }}
-              />
-            </div>
-          </>
-        )}
-
-        <button type="submit" disabled={loading}>
-          {loading ? "Submitting..." : "Register"}
-        </button>
-      </form>
-
-      {message && <p style={{ color: "green" }}>{message}</p>}
-      {error && <p style={{ color: "crimson" }}>{String(error)}</p>}
-
-      <p style={{ marginTop: 10 }}>
-        Already have an account? <Link to="/login">Login</Link>
-      </p>
-    </section>
+    </div>
   );
 }

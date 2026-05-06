@@ -1,5 +1,7 @@
 using CourseManagement.Api.Data;
+using CourseManagement.Api.DTOs;
 using CourseManagement.Api.Models.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,40 +19,104 @@ public class CoursesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Course>>> GetCourses()
+    public async Task<ActionResult> GetCourses()
     {
-        return await _context.Courses.Include(c => c.Instructor).ToListAsync();
+        var courses = await _context.Courses
+            .Include(c => c.Instructor)
+            .Include(c => c.Enrollments)
+            .Select(c => new
+            {
+                c.Id,
+                c.Title,
+                c.Credits,
+                c.InstructorId,
+                Instructor = c.Instructor == null ? null : new { c.Instructor.Id, c.Instructor.Name, c.Instructor.Email },
+                EnrollmentCount = c.Enrollments.Count,
+                Enrollments = c.Enrollments.Select(e => new { e.StudentId, e.CourseId, e.EnrollmentDate })
+            })
+            .ToListAsync();
+
+        return Ok(courses);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Course>> GetCourse(int id)
+    public async Task<ActionResult> GetCourse(int id)
     {
-        var course = await _context.Courses.Include(c => c.Instructor).FirstOrDefaultAsync(c => c.Id == id);
+        var course = await _context.Courses
+            .Include(c => c.Instructor)
+            .Include(c => c.Enrollments)
+                .ThenInclude(e => e.Student)
+            .Where(c => c.Id == id)
+            .Select(c => new
+            {
+                c.Id,
+                c.Title,
+                c.Credits,
+                c.InstructorId,
+                Instructor = c.Instructor == null ? null : new { c.Instructor.Id, c.Instructor.Name, c.Instructor.Email },
+                EnrollmentCount = c.Enrollments.Count,
+                Enrollments = c.Enrollments.Select(e => new
+                {
+                    e.StudentId,
+                    e.CourseId,
+                    e.EnrollmentDate,
+                    Student = new { e.Student.Id, e.Student.FullName, e.Student.Email }
+                })
+            })
+            .FirstOrDefaultAsync();
+
         if (course == null)
             return NotFound();
-        return course;
+
+        return Ok(course);
     }
 
     [HttpPost]
-    public async Task<ActionResult<Course>> CreateCourse(Course course)
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult> CreateCourse(CreateCourseDTO dto)
     {
+        var course = new Course
+        {
+            Title = dto.Title,
+            Credits = dto.Credits,
+            InstructorId = dto.InstructorId
+        };
+
         _context.Courses.Add(course);
         await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetCourse), new { id = course.Id }, course);
+
+        // Reload with Instructor included so the response has instructor name
+        await _context.Entry(course).Reference(c => c.Instructor).LoadAsync();
+
+        return CreatedAtAction(nameof(GetCourse), new { id = course.Id }, new
+        {
+            course.Id,
+            course.Title,
+            course.Credits,
+            course.InstructorId,
+            Instructor = course.Instructor == null ? null : new { course.Instructor.Id, course.Instructor.Name, course.Instructor.Email },
+            EnrollmentCount = 0
+        });
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateCourse(int id, Course course)
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UpdateCourse(int id, UpdateCourseDTO dto)
     {
-        if (id != course.Id)
-            return BadRequest();
+        var course = await _context.Courses.FindAsync(id);
+        if (course == null)
+            return NotFound();
 
-        _context.Entry(course).State = EntityState.Modified;
+        course.Title = dto.Title;
+        course.Credits = dto.Credits;
+        course.InstructorId = dto.InstructorId;
+
         await _context.SaveChangesAsync();
         return NoContent();
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteCourse(int id)
     {
         var course = await _context.Courses.FindAsync(id);

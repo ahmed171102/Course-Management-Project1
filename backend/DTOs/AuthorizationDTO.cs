@@ -10,10 +10,35 @@ public class LoginDTO
     public string Password { get; set; } = string.Empty;
 }
 
+public class RegisterDTO
+{
+    [Required]
+    [MinLength(3)]
+    [MaxLength(50)]
+    public string Username { get; set; } = string.Empty;
+
+    [Required]
+    [EmailAddress]
+    [MaxLength(150)]
+    public string Email { get; set; } = string.Empty;
+
+    [Required]
+    [MinLength(6)]
+    [MaxLength(100)]
+    public string Password { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Role must be one of: Admin, Instructor, User (Student).
+    /// Defaults to User if not provided.
+    /// </summary>
+    public string Role { get; set; } = "User";
+}
+
 public class LoginResponseDTO
 {
-    [System.Text.Json.Serialization.JsonIgnore]
     public string Token { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
+    public string Username { get; set; } = string.Empty;
     public DateTime Expires { get; set; }
     public string RefreshToken { get; set; } = string.Empty;
     public DateTime RefreshTokenExpires { get; set; }

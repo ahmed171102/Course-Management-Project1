@@ -50,6 +50,51 @@ public class AuthorizationService : IAuthorizationService
         return new LoginResponseDTO
         {
             Token = GenerateToken(user.Username, user.Role, expires),
+            Role = user.Role,
+            Username = user.Username,
+            Expires = expires,
+            RefreshToken = refreshToken.Token,
+            RefreshTokenExpires = refreshToken.ExpiresAtUtc
+        };
+    }
+
+    public async Task<LoginResponseDTO?> RegisterAsync(RegisterDTO registerDto)
+    {
+        // Check if username already exists
+        var existingUser = await _context.AppUsers
+            .FirstOrDefaultAsync(u => u.Username == registerDto.Username);
+
+        if (existingUser != null)
+        {
+            return null; // Username taken
+        }
+
+        // Validate role
+        var validRoles = new[] { "Admin", "Instructor", "User" };
+        var role = validRoles.FirstOrDefault(r =>
+            string.Equals(r, registerDto.Role, StringComparison.OrdinalIgnoreCase)) ?? "User";
+
+        var newUser = new AppUser
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            Username = registerDto.Username,
+            Email = registerDto.Email,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password),
+            Role = role
+        };
+
+        await _context.AppUsers.AddAsync(newUser);
+
+        var expires = DateTime.UtcNow.AddHours(2);
+        var refreshToken = await CreateAndSaveRefreshTokenAsync(newUser);
+
+        await _context.SaveChangesAsync();
+
+        return new LoginResponseDTO
+        {
+            Token = GenerateToken(newUser.Username, newUser.Role, expires),
+            Role = newUser.Role,
+            Username = newUser.Username,
             Expires = expires,
             RefreshToken = refreshToken.Token,
             RefreshTokenExpires = refreshToken.ExpiresAtUtc
@@ -77,6 +122,8 @@ public class AuthorizationService : IAuthorizationService
         return new LoginResponseDTO
         {
             Token = GenerateToken(existingToken.AppUser.Username, existingToken.AppUser.Role, accessTokenExpires),
+            Role = existingToken.AppUser.Role,
+            Username = existingToken.AppUser.Username,
             Expires = accessTokenExpires,
             RefreshToken = newRefreshToken.Token,
             RefreshTokenExpires = newRefreshToken.ExpiresAtUtc

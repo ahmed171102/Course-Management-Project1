@@ -151,3 +151,4 @@ M:\Term 10\Web Engineering\Current Lab\Project 1\CourseManagementApi\backend\obj
 M:\Term 10\Web Engineering\Current Lab\Project 1\CourseManagementApi\backend\obj\Debug\net10.0\CourseManagementApi.pdb
 M:\Term 10\Web Engineering\Current Lab\Project 1\CourseManagementApi\backend\obj\Debug\net10.0\CourseManagementApi.genruntimeconfig.cache
 M:\Term 10\Web Engineering\Current Lab\Project 1\CourseManagementApi\backend\obj\Debug\net10.0\ref\CourseManagementApi.dll
+M:\Term 10\Web Engineering\Current Lab\Project 1\CourseManagementApi\backend\bin\Debug\net10.0\package-lock.json

@@ -1,4 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { getCurrentUser, logout, getUserRole } from "../services/authService";
 import "./NavigationBar.css";
 
@@ -8,6 +9,23 @@ export default function NavBar() {
   const role = (getUserRole() || "").toLowerCase();
 
   const dashboardPath = role === "admin" ? "/admin" : role === "instructor" ? "/instructor" : "/student";
+
+  const [isLightMode, setIsLightMode] = useState(false);
+
+  useEffect(() => {
+    // Check initial state from body class
+    setIsLightMode(document.body.classList.contains("light-mode"));
+  }, []);
+
+  function toggleTheme() {
+    if (isLightMode) {
+      document.body.classList.remove("light-mode");
+      setIsLightMode(false);
+    } else {
+      document.body.classList.add("light-mode");
+      setIsLightMode(true);
+    }
+  }
 
   function handleLogout() {
     logout();
@@ -30,13 +48,35 @@ export default function NavBar() {
             Courses
           </NavLink>
           {role === "admin" && (
-            <NavLink to="/courses/new" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
-              Add Course
-            </NavLink>
+            <>
+              <NavLink to="/instructors" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+                Instructors
+              </NavLink>
+              <NavLink to="/courses/new" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+                Add Course
+              </NavLink>
+            </>
           )}
         </div>
 
         <div className="navbar-user">
+          <button 
+            type="button" 
+            className="btn-icon theme-toggle" 
+            onClick={toggleTheme} 
+            title="Toggle Theme"
+            style={{ 
+              background: "transparent", 
+              border: "none", 
+              fontSize: "1.2rem", 
+              cursor: "pointer", 
+              padding: "8px", 
+              color: "var(--text-primary)",
+              marginRight: "8px"
+            }}
+          >
+            {isLightMode ? "🌙" : "☀️"}
+          </button>
           <div className="user-badge">
             <span className="user-avatar">{(username || "U")[0].toUpperCase()}</span>
             <span className="user-name">{username}</span>

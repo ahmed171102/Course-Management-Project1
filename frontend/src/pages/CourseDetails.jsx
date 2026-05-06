@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { deleteCourse, getCourseById, updateCourse } from "../services/coursesService";
+import { getStudents } from "../services/studentsService";
+import { createEnrollment, deleteEnrollment } from "../services/enrollmentsService";
 import { getUserRole } from "../services/authService";
 import toast from "react-hot-toast";
 import "./FormPages.css";
@@ -22,6 +24,11 @@ export default function CourseDetails() {
   const [credits, setCredits] = useState(1);
   const [instructorId, setInstructorId] = useState(1);
 
+  // Enrollment states
+  const [allStudents, setAllStudents] = useState([]);
+  const [selectedStudentId, setSelectedStudentId] = useState("");
+  const [enrolling, setEnrolling] = useState(false);
+
   async function load() {
     setLoading(true);
     setError("");
@@ -31,6 +38,11 @@ export default function CourseDetails() {
       setTitle(data.title);
       setCredits(data.credits);
       setInstructorId(data.instructorId);
+
+      if (canEdit) {
+        const students = await getStudents();
+        setAllStudents(students);
+      }
     } catch (err) {
       setError(err?.response?.data || err.message || "Failed to load course.");
     } finally {
@@ -77,6 +89,36 @@ export default function CourseDetails() {
       toast.error("Failed to delete course.");
     } finally {
       setDeleting(false);
+    }
+  }
+
+  async function handleEnroll(e) {
+    e.preventDefault();
+    if (!selectedStudentId) return;
+    setEnrolling(true);
+    try {
+      await createEnrollment(Number(selectedStudentId), Number(id));
+      toast.success("Student enrolled successfully!");
+      setSelectedStudentId("");
+      await load();
+    } catch (err) {
+      const msg = err?.response?.data || err.message || "Enrollment failed.";
+      toast.error(String(msg));
+    } finally {
+      setEnrolling(false);
+    }
+  }
+
+  async function handleRemoveEnrollment(studentId) {
+    const ok = confirm("Are you sure you want to remove this student from the course?");
+    if (!ok) return;
+    try {
+      await deleteEnrollment(studentId, Number(id));
+      toast.success("Student removed from course.");
+      await load();
+    } catch (err) {
+      const msg = err?.response?.data || err.message || "Failed to remove student.";
+      toast.error(String(msg));
     }
   }
 
@@ -222,12 +264,43 @@ export default function CourseDetails() {
 
       {/* Enrolled Students List */}
       <div className="form-card card" style={{ marginTop: 24 }}>
-        <h3 style={{ marginBottom: 16 }}>
-          Enrolled Students
-          <span className="badge badge-primary" style={{ marginLeft: 12, fontSize: 13 }}>
-            {enrollmentCount}
-          </span>
-        </h3>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <h3>
+            Enrolled Students
+            <span className="badge badge-primary" style={{ marginLeft: 12, fontSize: 13 }}>
+              {enrollmentCount}
+            </span>
+          </h3>
+        </div>
+
+        {canEdit && (
+          <form onSubmit={handleEnroll} style={{ display: "flex", gap: "12px", marginBottom: "20px" }}>
+            <select
+              value={selectedStudentId}
+              onChange={(e) => setSelectedStudentId(e.target.value)}
+              required
+              style={{
+                flex: 1,
+                padding: "10px",
+                borderRadius: "var(--radius-md)",
+                border: "1px solid var(--border)",
+                background: "rgba(0, 0, 0, 0.2)",
+                color: "var(--text-primary)"
+              }}
+            >
+              <option value="">-- Select a student to enroll --</option>
+              {allStudents
+                .filter(s => !enrollments.some(e => e.studentId === s.id))
+                .map(s => (
+                  <option key={s.id} value={s.id}>{s.fullName} ({s.email})</option>
+                ))}
+            </select>
+            <button type="submit" className="btn btn-primary" disabled={enrolling || !selectedStudentId}>
+              {enrolling ? "Enrolling..." : "Enroll"}
+            </button>
+          </form>
+        )}
+
         {enrollments.length === 0 ? (
           <p style={{ color: "var(--text-muted)", textAlign: "center", padding: "20px 0" }}>
             No students enrolled in this course yet.
@@ -241,6 +314,7 @@ export default function CourseDetails() {
                   <th style={thStyle}>Student Name</th>
                   <th style={thStyle}>Email</th>
                   <th style={thStyle}>Enrolled On</th>
+                  {canEdit && <th style={{ ...thStyle, textAlign: "right" }}>Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -252,6 +326,24 @@ export default function CourseDetails() {
                     <td style={{ ...tdStyle, color: "var(--text-muted)" }}>
                       {e.enrollmentDate ? new Date(e.enrollmentDate).toLocaleDateString() : "—"}
                     </td>
+                    {canEdit && (
+                      <td style={{ ...tdStyle, textAlign: "right" }}>
+                        <button
+                          onClick={() => handleRemoveEnrollment(e.studentId)}
+                          style={{
+                            background: "transparent",
+                            border: "1px solid var(--danger)",
+                            color: "var(--danger)",
+                            padding: "4px 8px",
+                            borderRadius: "var(--radius-sm)",
+                            cursor: "pointer",
+                            fontSize: "12px"
+                          }}
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

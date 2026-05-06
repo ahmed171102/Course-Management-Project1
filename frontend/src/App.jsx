@@ -10,6 +10,7 @@ import StudentDashboard from "./pages/StudentDashboard.jsx";
 import CoursesList from "./pages/CoursesList.jsx";
 import CourseCreate from "./pages/CourseCreate.jsx";
 import CourseDetails from "./pages/CourseDetails.jsx";
+import InstructorsList from "./pages/InstructorsList.jsx";
 
 import "./App.css";
 
@@ -101,6 +102,16 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <CourseDetails />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Instructors (Admin Only handled by endpoint, but route protected) */}
+          <Route
+            path="/instructors"
+            element={
+              <ProtectedRoute>
+                <InstructorsList />
               </ProtectedRoute>
             }
           />

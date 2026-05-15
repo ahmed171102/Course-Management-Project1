@@ -5,6 +5,7 @@ import { getStudents } from "../services/studentsService";
 import { createEnrollment, deleteEnrollment } from "../services/enrollmentsService";
 import { getUserRole } from "../services/authService";
 import toast from "react-hot-toast";
+import ConfirmModal from "../components/ConfirmModal";
 import "./FormPages.css";
 
 export default function CourseDetails() {
@@ -28,6 +29,9 @@ export default function CourseDetails() {
   const [allStudents, setAllStudents] = useState([]);
   const [selectedStudentId, setSelectedStudentId] = useState("");
   const [enrolling, setEnrolling] = useState(false);
+
+  // Modal states
+  const [modalConfig, setModalConfig] = useState({ isOpen: false, title: "", message: "", onConfirm: null });
 
   async function load() {
     setLoading(true);
@@ -74,9 +78,19 @@ export default function CourseDetails() {
     }
   }
 
-  async function handleDelete() {
-    const ok = confirm("Are you sure you want to delete this course?");
-    if (!ok) return;
+  function promptDeleteCourse() {
+    setModalConfig({
+      isOpen: true,
+      title: "Delete Course",
+      message: "Are you sure you want to delete this course? This action cannot be undone.",
+      onConfirm: async () => {
+        setModalConfig({ ...modalConfig, isOpen: false });
+        await executeDeleteCourse();
+      }
+    });
+  }
+
+  async function executeDeleteCourse() {
     setDeleting(true);
     setError("");
     try {
@@ -109,9 +123,19 @@ export default function CourseDetails() {
     }
   }
 
-  async function handleRemoveEnrollment(studentId) {
-    const ok = confirm("Are you sure you want to remove this student from the course?");
-    if (!ok) return;
+  function promptRemoveStudent(studentId) {
+    setModalConfig({
+      isOpen: true,
+      title: "Remove Student",
+      message: "Are you sure you want to remove this student from the course?",
+      onConfirm: async () => {
+        setModalConfig({ ...modalConfig, isOpen: false });
+        await executeRemoveStudent(studentId);
+      }
+    });
+  }
+
+  async function executeRemoveStudent(studentId) {
     try {
       await deleteEnrollment(studentId, Number(id));
       toast.success("Student removed from course.");
@@ -221,10 +245,10 @@ export default function CourseDetails() {
             <div className="form-actions">
               <button
                 type="button"
-                className="btn btn-danger"
-                onClick={handleDelete}
+                className="btn btn-secondary"
+                onClick={promptDeleteCourse}
                 disabled={deleting}
-                id="delete-course-btn"
+                style={{ color: "var(--danger)", borderColor: "var(--danger-bg)" }}
               >
                 {deleting ? "Deleting..." : "Delete Course"}
               </button>
@@ -329,7 +353,7 @@ export default function CourseDetails() {
                     {canEdit && (
                       <td style={{ ...tdStyle, textAlign: "right" }}>
                         <button
-                          onClick={() => handleRemoveEnrollment(e.studentId)}
+                          onClick={() => promptRemoveStudent(e.studentId)}
                           style={{
                             background: "transparent",
                             border: "1px solid var(--danger)",
@@ -351,6 +375,16 @@ export default function CourseDetails() {
           </div>
         )}
       </div>
+
+      <ConfirmModal 
+        isOpen={modalConfig.isOpen}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        onConfirm={modalConfig.onConfirm}
+        onCancel={() => setModalConfig({ ...modalConfig, isOpen: false })}
+        confirmText="Yes, Proceed"
+        isDanger={true}
+      />
     </section>
   );
 }

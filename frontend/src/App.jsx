@@ -11,6 +11,8 @@ import CoursesList from "./pages/CoursesList.jsx";
 import CourseCreate from "./pages/CourseCreate.jsx";
 import CourseDetails from "./pages/CourseDetails.jsx";
 import InstructorsList from "./pages/InstructorsList.jsx";
+import UsersList from "./pages/UsersList.jsx";
+import Profile from "./pages/Profile.jsx";
 
 import "./App.css";
 
@@ -112,6 +114,26 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <InstructorsList />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* System Users (Admin Only) */}
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute>
+                <UsersList />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Profile */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
               </ProtectedRoute>
             }
           />

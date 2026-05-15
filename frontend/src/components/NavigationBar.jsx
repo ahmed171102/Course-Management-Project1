@@ -49,6 +49,9 @@ export default function NavBar() {
           </NavLink>
           {role === "admin" && (
             <>
+              <NavLink to="/users" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+                Users
+              </NavLink>
               <NavLink to="/instructors" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
                 Instructors
               </NavLink>
@@ -77,11 +80,11 @@ export default function NavBar() {
           >
             {isLightMode ? "🌙" : "☀️"}
           </button>
-          <div className="user-badge">
+          <NavLink to="/profile" className="user-badge" style={{ textDecoration: 'none' }}>
             <span className="user-avatar">{(username || "U")[0].toUpperCase()}</span>
             <span className="user-name">{username}</span>
             <span className={`role-tag role-${role}`}>{role}</span>
-          </div>
+          </NavLink>
           <button type="button" className="btn-ghost logout-btn" onClick={handleLogout} id="logout-btn">
             Logout
           </button>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getInstructors, createInstructor, deleteInstructor } from "../services/instructorsService";
 import toast from "react-hot-toast";
+import ConfirmModal from "../components/ConfirmModal";
 import "./CoursesList.css"; // Reuse the grid CSS
 
 export default function InstructorsList() {
@@ -13,6 +14,9 @@ export default function InstructorsList() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [creating, setCreating] = useState(false);
+
+  // Modal states
+  const [modalConfig, setModalConfig] = useState({ isOpen: false, title: "", message: "", onConfirm: null });
 
   async function load() {
     setLoading(true);
@@ -46,8 +50,19 @@ export default function InstructorsList() {
     }
   }
 
-  async function handleDelete(id, name) {
-    if (!confirm(`Are you sure you want to delete instructor ${name}?`)) return;
+  function promptDelete(id, name) {
+    setModalConfig({
+      isOpen: true,
+      title: "Delete Instructor",
+      message: `Are you sure you want to delete ${name}?`,
+      onConfirm: async () => {
+        setModalConfig({ ...modalConfig, isOpen: false });
+        await executeDelete(id);
+      }
+    });
+  }
+
+  async function executeDelete(id) {
     try {
       await deleteInstructor(id);
       toast.success("Instructor deleted.");
@@ -123,7 +138,7 @@ export default function InstructorsList() {
                 </div>
               </div>
               <button 
-                onClick={() => handleDelete(instructor.id, instructor.name)} 
+                onClick={() => promptDelete(instructor.id, instructor.name)} 
                 className="btn btn-secondary" 
                 style={{ marginTop: "auto", color: "var(--danger)", borderColor: "var(--danger-bg)" }}
               >
@@ -133,6 +148,16 @@ export default function InstructorsList() {
           ))}
         </ul>
       )}
+
+      <ConfirmModal 
+        isOpen={modalConfig.isOpen}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        onConfirm={modalConfig.onConfirm}
+        onCancel={() => setModalConfig({ ...modalConfig, isOpen: false })}
+        confirmText="Yes, Delete"
+        isDanger={true}
+      />
     </section>
   );
 }

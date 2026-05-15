@@ -4,6 +4,23 @@ import { getCourses } from "../services/coursesService";
 import { getUserRole } from "../services/authService";
 import "./CoursesList.css";
 
+const gradients = [
+  "linear-gradient(135deg, #f6d365 0%, #fda085 100%)",
+  "linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)",
+  "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)",
+  "linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)",
+  "linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)",
+  "linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)",
+  "linear-gradient(135deg, #cfd9df 0%, #e2ebf0 100%)",
+  "linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)",
+  "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+  "linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)"
+];
+
+function getGradient(id) {
+  return gradients[id % gradients.length];
+}
+
 export default function CoursesList() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -80,10 +97,21 @@ export default function CoursesList() {
       </div>
 
       {loading && (
-        <div className="loading-state">
-          <div className="spinner"></div>
-          <p>Loading courses...</p>
-        </div>
+        <ul className="courses-grid" style={{ marginTop: 24 }}>
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <li key={i} className="course-card" style={{ padding: 0 }}>
+              <div className="skeleton-box" style={{ height: 80, borderRadius: "var(--radius-md) var(--radius-md) 0 0" }}></div>
+              <div className="course-card-body">
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <div className="skeleton-box" style={{ width: '60%' }}></div>
+                  <div className="skeleton-box" style={{ width: '20%' }}></div>
+                </div>
+                <div className="skeleton-box" style={{ width: '40%' }}></div>
+                <div className="skeleton-box" style={{ width: '30%', marginTop: 'auto' }}></div>
+              </div>
+            </li>
+          ))}
+        </ul>
       )}
 
       {error && (
@@ -127,37 +155,40 @@ export default function CoursesList() {
           <ul className="courses-grid">
             {filtered.map((c) => (
               <li key={c.id} className="course-card">
-                <div className="course-card-top">
-                  <h3 className="course-title">
-                    <Link to={`/courses/${c.id}`}>{c.title}</Link>
-                  </h3>
-                  <span className="badge badge-primary">{c.credits} Credits</span>
+                <div className="course-cover" style={{ background: getGradient(c.id) }}></div>
+                <div className="course-card-body">
+                  <div className="course-card-top">
+                    <h3 className="course-title">
+                      <Link to={`/courses/${c.id}`}>{c.title}</Link>
+                    </h3>
+                    <span className="badge badge-primary">{c.credits} Credits</span>
+                  </div>
+                  <div className="course-meta-info">
+                    {c.instructor && (
+                      <div className="meta-row">
+                        <span className="meta-label">Instructor</span>
+                        <span className="meta-value">{c.instructor.name}</span>
+                      </div>
+                    )}
+                    {c.instructorName && !c.instructor && (
+                      <div className="meta-row">
+                        <span className="meta-label">Instructor</span>
+                        <span className="meta-value">{c.instructorName}</span>
+                      </div>
+                    )}
+                  </div>
+                  {(() => {
+                    const count = c.enrollmentCount ?? c.enrollments?.length ?? 0;
+                    return (
+                      <div className="course-enrollment-badge">
+                        👥 {count} student{count !== 1 ? "s" : ""}
+                      </div>
+                    );
+                  })()}
+                  <Link to={`/courses/${c.id}`} className="course-view-link" id={`course-view-${c.id}`}>
+                    View Details →
+                  </Link>
                 </div>
-                <div className="course-meta-info">
-                  {c.instructor && (
-                    <div className="meta-row">
-                      <span className="meta-label">Instructor</span>
-                      <span className="meta-value">{c.instructor.name}</span>
-                    </div>
-                  )}
-                  {c.instructorName && !c.instructor && (
-                    <div className="meta-row">
-                      <span className="meta-label">Instructor</span>
-                      <span className="meta-value">{c.instructorName}</span>
-                    </div>
-                  )}
-                </div>
-                {(() => {
-                  const count = c.enrollmentCount ?? c.enrollments?.length ?? 0;
-                  return (
-                    <div className="course-enrollment-badge">
-                      👥 {count} student{count !== 1 ? "s" : ""}
-                    </div>
-                  );
-                })()}
-                <Link to={`/courses/${c.id}`} className="course-view-link" id={`course-view-${c.id}`}>
-                  View Details →
-                </Link>
               </li>
             ))}
           </ul>

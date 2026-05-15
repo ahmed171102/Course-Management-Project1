@@ -7,5 +7,6 @@ public class Instructor
     public string Email { get; set; } = string.Empty;
 
     public InstructorProfile? Profile { get; set; }
+    public bool IsActive { get; set; } = true;
     public ICollection<Course> Courses { get; set; } = new List<Course>();
 }

@@ -177,7 +177,7 @@ public class CourseService : ICourseService
             return false;
         }
 
-        _context.Courses.Remove(course);
+        course.IsActive = false;
         await _context.SaveChangesAsync();
         return true;
     }

@@ -141,7 +141,7 @@ public class InstructorService : IInstructorService
             return false;
         }
 
-        _context.Instructors.Remove(instructor);
+        instructor.IsActive = false;
         await _context.SaveChangesAsync();
         return true;
     }

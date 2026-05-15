@@ -67,7 +67,7 @@ export default function InstructorsList() {
       await deleteInstructor(id);
       toast.success("Instructor deleted.");
       await load();
-    } catch (err) {
+    } catch {
       toast.error("Cannot delete instructor (they may be assigned to a course).");
     }
   }

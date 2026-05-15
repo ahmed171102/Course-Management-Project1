@@ -23,3 +23,13 @@ export async function createEnrollment(studentId, courseId) {
 export async function deleteEnrollment(studentId, courseId) {
   await apiClient.delete(`/enrollments/${studentId}/${courseId}`);
 }
+
+export async function selfEnroll(courseId) {
+  const res = await apiClient.post(`/enrollments/self-enroll/${courseId}`);
+  return res.data;
+}
+
+export async function selfDrop(courseId) {
+  const res = await apiClient.post(`/enrollments/self-drop/${courseId}`);
+  return res.data;
+}

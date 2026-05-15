@@ -52,6 +52,7 @@ public class AuthorizationService : IAuthorizationService
             Token = GenerateToken(user.Username, user.Role, expires),
             Role = user.Role,
             Username = user.Username,
+            Email = user.Email,
             Expires = expires,
             RefreshToken = refreshToken.Token,
             RefreshTokenExpires = refreshToken.ExpiresAtUtc
@@ -95,6 +96,7 @@ public class AuthorizationService : IAuthorizationService
             Token = GenerateToken(newUser.Username, newUser.Role, expires),
             Role = newUser.Role,
             Username = newUser.Username,
+            Email = newUser.Email,
             Expires = expires,
             RefreshToken = refreshToken.Token,
             RefreshTokenExpires = refreshToken.ExpiresAtUtc
@@ -124,6 +126,7 @@ public class AuthorizationService : IAuthorizationService
             Token = GenerateToken(existingToken.AppUser.Username, existingToken.AppUser.Role, accessTokenExpires),
             Role = existingToken.AppUser.Role,
             Username = existingToken.AppUser.Username,
+            Email = existingToken.AppUser.Email,
             Expires = accessTokenExpires,
             RefreshToken = newRefreshToken.Token,
             RefreshTokenExpires = newRefreshToken.ExpiresAtUtc

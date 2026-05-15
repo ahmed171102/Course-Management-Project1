@@ -117,7 +117,7 @@ public class StudentService : IStudentService
             return false;
         }
 
-        _context.Students.Remove(student);
+        student.IsActive = false;
         await _context.SaveChangesAsync();
         return true;
     }

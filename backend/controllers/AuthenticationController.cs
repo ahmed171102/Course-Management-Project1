@@ -1,7 +1,9 @@
 using CourseManagement.Api.DTOs;
 using CourseManagement.Api.Interfaces;
+using CourseManagement.Api.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using AppAuthorizationService = CourseManagement.Api.Interfaces.IAuthorizationService;
 
 namespace CourseManagement.Api.Controllers;
@@ -73,5 +75,26 @@ public class AuthenticationController : ControllerBase
         }
 
         return NoContent();
+    }
+
+    [Authorize]
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword([FromServices] AppDbContext context, [FromBody] ChangePasswordDTO dto)
+    {
+        var username = User.Identity?.Name;
+        if (string.IsNullOrEmpty(username)) return Unauthorized();
+
+        var user = await context.AppUsers.FirstOrDefaultAsync(u => u.Username == username);
+        if (user == null) return NotFound("User not found.");
+
+        if (!BCrypt.Net.BCrypt.Verify(dto.CurrentPassword, user.PasswordHash))
+        {
+            return BadRequest("Incorrect current password.");
+        }
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+        await context.SaveChangesAsync();
+
+        return Ok(new { message = "Password updated successfully." });
     }
 }

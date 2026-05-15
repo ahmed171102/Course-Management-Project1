@@ -63,7 +63,7 @@ public class UsersController : ControllerBase
         if (user.Username == currentUsername)
             return BadRequest("You cannot delete your own account.");
 
-        _context.AppUsers.Remove(user);
+        user.IsActive = false;
         await _context.SaveChangesAsync();
         return NoContent();
     }

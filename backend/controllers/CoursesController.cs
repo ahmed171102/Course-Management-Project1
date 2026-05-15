@@ -100,12 +100,31 @@ public class CoursesController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Instructor")]
     public async Task<IActionResult> UpdateCourse(int id, UpdateCourseDTO dto)
     {
         var course = await _context.Courses.FindAsync(id);
         if (course == null)
             return NotFound();
+
+        var isInstructor = User.IsInRole("Instructor");
+        if (isInstructor)
+        {
+            var appUser = await _context.AppUsers.FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            if (appUser == null) return Unauthorized();
+
+            var instructorEntity = await _context.Instructors.FirstOrDefaultAsync(i => i.Id == course.InstructorId);
+            if (instructorEntity == null || instructorEntity.Email != appUser.Email)
+            {
+                return Forbid();
+            }
+
+            // Instructors cannot change the instructorId
+            if (dto.InstructorId != course.InstructorId)
+            {
+                return BadRequest("Instructors cannot reassign courses to other instructors.");
+            }
+        }
 
         course.Title = dto.Title;
         course.Credits = dto.Credits;

@@ -111,6 +111,8 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
 
+    db.Database.ExecuteSqlRaw("UPDATE \"AppUsers\" SET \"IsActive\" = true; UPDATE \"Courses\" SET \"IsActive\" = true; UPDATE \"Students\" SET \"IsActive\" = true; UPDATE \"Instructors\" SET \"IsActive\" = true;");
+
     if (!db.AppUsers.Any())
     {
         db.AppUsers.AddRange(

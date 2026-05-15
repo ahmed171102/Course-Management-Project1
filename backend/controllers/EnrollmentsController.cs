@@ -98,4 +98,42 @@ public class EnrollmentsController : ControllerBase
         await _context.SaveChangesAsync();
         return NoContent();
     }
+
+    [Microsoft.AspNetCore.Authorization.Authorize]
+    [HttpPost("self-enroll/{courseId}")]
+    public async Task<ActionResult> SelfEnroll(int courseId)
+    {
+        var username = User.Identity?.Name;
+        var appUser = await _context.AppUsers.FirstOrDefaultAsync(u => u.Username == username);
+        if (appUser == null) return Unauthorized();
+
+        var student = await _context.Students.FirstOrDefaultAsync(s => s.Email == appUser.Email);
+        if (student == null) return NotFound("Student profile not found.");
+
+        var alreadyEnrolled = await _context.Enrollments.AnyAsync(e => e.StudentId == student.Id && e.CourseId == courseId);
+        if (alreadyEnrolled) return Conflict("Already enrolled.");
+
+        _context.Enrollments.Add(new Enrollment { StudentId = student.Id, CourseId = courseId, EnrollmentDate = DateTime.UtcNow });
+        await _context.SaveChangesAsync();
+        return Ok();
+    }
+
+    [Microsoft.AspNetCore.Authorization.Authorize]
+    [HttpPost("self-drop/{courseId}")]
+    public async Task<ActionResult> SelfDrop(int courseId)
+    {
+        var username = User.Identity?.Name;
+        var appUser = await _context.AppUsers.FirstOrDefaultAsync(u => u.Username == username);
+        if (appUser == null) return Unauthorized();
+
+        var student = await _context.Students.FirstOrDefaultAsync(s => s.Email == appUser.Email);
+        if (student == null) return NotFound("Student profile not found.");
+
+        var enrollment = await _context.Enrollments.FindAsync(student.Id, courseId);
+        if (enrollment == null) return NotFound("Not enrolled.");
+
+        _context.Enrollments.Remove(enrollment);
+        await _context.SaveChangesAsync();
+        return Ok();
+    }
 }

@@ -15,6 +15,10 @@ public class AppDbContext : DbContext
     public DbSet<AppUser> AppUsers => Set<AppUser>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
+    public DbSet<CourseModule> CourseModules => Set<CourseModule>();
+    public DbSet<Assignment> Assignments => Set<Assignment>();
+    public DbSet<AssignmentSubmission> AssignmentSubmissions => Set<AssignmentSubmission>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // 1-1 Instructor <-> InstructorProfile
@@ -53,6 +57,37 @@ public class AppDbContext : DbContext
             .HasOne(rt => rt.AppUser)
             .WithMany(u => u.RefreshTokens)
             .HasForeignKey(rt => rt.AppUserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Global query filters for soft deletion
+        modelBuilder.Entity<Instructor>().HasQueryFilter(i => i.IsActive);
+        modelBuilder.Entity<Student>().HasQueryFilter(s => s.IsActive);
+        modelBuilder.Entity<Course>().HasQueryFilter(c => c.IsActive);
+        modelBuilder.Entity<AppUser>().HasQueryFilter(u => u.IsActive);
+
+        // Course Modules -> Assignments -> Submissions relations
+        modelBuilder.Entity<CourseModule>()
+            .HasOne(m => m.Course)
+            .WithMany(c => c.Modules)
+            .HasForeignKey(m => m.CourseId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Assignment>()
+            .HasOne(a => a.CourseModule)
+            .WithMany(m => m.Assignments)
+            .HasForeignKey(a => a.CourseModuleId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<AssignmentSubmission>()
+            .HasOne(s => s.Assignment)
+            .WithMany(a => a.Submissions)
+            .HasForeignKey(s => s.AssignmentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<AssignmentSubmission>()
+            .HasOne(s => s.Student)
+            .WithMany()
+            .HasForeignKey(s => s.StudentId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

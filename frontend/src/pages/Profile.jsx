@@ -1,4 +1,6 @@
-import { getCurrentUser } from "../services/authService";
+import { useState } from "react";
+import { getCurrentUser, changePassword } from "../services/authService";
+import toast from "react-hot-toast";
 import "./FormPages.css";
 
 export default function Profile() {
@@ -6,8 +8,36 @@ export default function Profile() {
   const role = (user.role || "User").toUpperCase();
   const initial = (user.username || "U")[0].toUpperCase();
 
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changing, setChanging] = useState(false);
+
+  async function handleChangePassword(e) {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      return toast.error("New passwords do not match.");
+    }
+    if (newPassword.length < 6) {
+      return toast.error("Password must be at least 6 characters.");
+    }
+
+    setChanging(true);
+    try {
+      await changePassword(currentPassword, newPassword);
+      toast.success("Password updated successfully!");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      toast.error(err?.response?.data || "Failed to change password.");
+    } finally {
+      setChanging(false);
+    }
+  }
+
   return (
-    <section className="form-page animate-slide" style={{ paddingTop: 64 }}>
+    <section className="form-page animate-slide" style={{ paddingTop: 64, paddingBottom: 64 }}>
       <div className="form-card card" style={{ maxWidth: 500, margin: "0 auto", textAlign: "center" }}>
         <div 
           style={{ 
@@ -61,6 +91,47 @@ export default function Profile() {
           </div>
         </div>
 
+      </div>
+
+      <div className="form-card card" style={{ maxWidth: 500, margin: "24px auto 0" }}>
+        <h3 style={{ marginBottom: 20 }}>Change Password</h3>
+        <form onSubmit={handleChangePassword}>
+          <div className="form-group">
+            <label htmlFor="currentPassword">Current Password</label>
+            <input
+              id="currentPassword"
+              type="password"
+              required
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="newPassword">New Password</label>
+            <input
+              id="newPassword"
+              type="password"
+              required
+              minLength={6}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="confirmPassword">Confirm New Password</label>
+            <input
+              id="confirmPassword"
+              type="password"
+              required
+              minLength={6}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+          </div>
+          <button type="submit" className="btn btn-primary" disabled={changing} style={{ width: "100%" }}>
+            {changing ? "Updating..." : "Update Password"}
+          </button>
+        </form>
       </div>
     </section>
   );

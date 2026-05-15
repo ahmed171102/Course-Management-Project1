@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { deleteCourse, getCourseById, updateCourse } from "../services/coursesService";
 import { getStudents } from "../services/studentsService";
-import { createEnrollment, deleteEnrollment } from "../services/enrollmentsService";
-import { getUserRole } from "../services/authService";
+import { createEnrollment, deleteEnrollment, selfEnroll, selfDrop } from "../services/enrollmentsService";
+import { getUserRole, getUsername, getCurrentUser } from "../services/authService";
+import CourseModulesList from "../components/CourseModulesList";
 import toast from "react-hot-toast";
 import ConfirmModal from "../components/ConfirmModal";
 import "./FormPages.css";
@@ -11,8 +12,10 @@ import "./FormPages.css";
 export default function CourseDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const role = (getUserRole() || "").toLowerCase();
-  const canEdit = role === "admin";
+  const user = getCurrentUser();
+  const role = (user.role || "").toLowerCase();
+  const isStudent = role === "user" || role === "student";
+  const canEdit = role === "admin" || (role === "instructor" && course?.instructor?.email === user.email);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -43,7 +46,8 @@ export default function CourseDetails() {
       setCredits(data.credits);
       setInstructorId(data.instructorId);
 
-      if (canEdit) {
+      const isAuthorizedToEdit = role === "admin" || (role === "instructor" && data?.instructor?.email === user.email);
+      if (isAuthorizedToEdit) {
         const students = await getStudents();
         setAllStudents(students);
       }
@@ -146,6 +150,32 @@ export default function CourseDetails() {
     }
   }
 
+  async function handleSelfEnroll() {
+    setEnrolling(true);
+    try {
+      await selfEnroll(Number(id));
+      toast.success("Successfully enrolled!");
+      await load();
+    } catch (err) {
+      toast.error(err?.response?.data || "Failed to enroll.");
+    } finally {
+      setEnrolling(false);
+    }
+  }
+
+  async function handleSelfDrop() {
+    setEnrolling(true);
+    try {
+      await selfDrop(Number(id));
+      toast.success("Successfully dropped course.");
+      await load();
+    } catch (err) {
+      toast.error(err?.response?.data || "Failed to drop course.");
+    } finally {
+      setEnrolling(false);
+    }
+  }
+
   if (loading) {
     return (
       <section className="form-page" style={{ paddingTop: 64 }}>
@@ -232,6 +262,7 @@ export default function CourseDetails() {
                   min={1}
                   value={instructorId}
                   onChange={(e) => setInstructorId(e.target.value)}
+                  disabled={role === "instructor"} 
                 />
               </div>
             </div>
@@ -243,15 +274,17 @@ export default function CourseDetails() {
             )}
 
             <div className="form-actions">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={promptDeleteCourse}
-                disabled={deleting}
-                style={{ color: "var(--danger)", borderColor: "var(--danger-bg)" }}
-              >
-                {deleting ? "Deleting..." : "Delete Course"}
-              </button>
+              {role === "admin" && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={promptDeleteCourse}
+                  disabled={deleting}
+                  style={{ color: "var(--danger)", borderColor: "var(--danger-bg)" }}
+                >
+                  {deleting ? "Deleting..." : "Delete Course"}
+                </button>
+              )}
               <button type="submit" className="btn btn-primary" disabled={saving} id="update-course-btn">
                 {saving ? "Saving..." : "Update Course"}
               </button>
@@ -282,6 +315,23 @@ export default function CourseDetails() {
                 <span className="detail-value">{course.instructor.name}</span>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {isStudent && (
+        <div className="form-card card" style={{ marginTop: 24 }}>
+          <h3>Student Actions</h3>
+          <p style={{ color: "var(--text-muted)", marginTop: 8 }}>
+            You can enroll or drop this course using the buttons below.
+          </p>
+          <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
+            <button className="btn btn-primary" onClick={handleSelfEnroll} disabled={enrolling}>
+              {enrolling ? "Processing..." : "Enroll in Course"}
+            </button>
+            <button className="btn btn-secondary" onClick={handleSelfDrop} disabled={enrolling} style={{ color: "var(--danger)", borderColor: "var(--danger-bg)" }}>
+               Drop Course
+            </button>
           </div>
         </div>
       )}
@@ -375,6 +425,8 @@ export default function CourseDetails() {
           </div>
         )}
       </div>
+
+      <CourseModulesList courseId={course.id} canEdit={canEdit} isStudent={isStudent} />
 
       <ConfirmModal 
         isOpen={modalConfig.isOpen}

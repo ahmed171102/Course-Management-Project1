@@ -1,16 +1,41 @@
-# React + Vite
+# Course Management Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The frontend for the Course Management System is a Single Page Application (SPA) built with **React** and **Vite**.
 
-Currently, two official plugins are available:
+## ✨ Core Features
+*   **Dynamic Role-Based UI:** The interface conditionally renders features based on the logged-in user's role (Admin, Instructor, Student).
+*   **Premium Aesthetics:** Built with custom vanilla CSS focusing on vibrant colors, dark mode integrations, glassmorphism, and smooth micro-animations.
+*   **Course & Module Management:** Interfaces for instructors to structure their courses, create modules, and add assignments.
+*   **Student Self-Enrollment:** One-click enrollment and drop capabilities.
+*   **Live Grading System:** Instructors can view student assignment submissions and provide real-time grades and feedback.
+*   **Account Security:** Built-in forms for users to securely change their passwords.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## ⚙️ Prerequisites
+*   Node.js (v18+)
+*   npm (or yarn)
 
-## React Compiler
+## 🚀 Setup & Execution
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. **Install Dependencies:**
+   ```bash
+   npm install
+   ```
 
-## Expanding the ESLint configuration
+2. **Configure API Endpoint:**
+   If your backend is running on a port other than `http://localhost:5000`, open `src/services/apiClient.js` and update the `baseURL`.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+3. **Run the Development Server:**
+   ```bash
+   npm run dev
+   ```
+   The application will start on `http://localhost:5173`.
+
+4. **Build for Production:**
+   ```bash
+   npm run build
+   ```
+
+## 📁 Key Directories
+*   **`/src/pages`**: Contains all the main views (`CourseDetails`, `Profile`, `Login`, etc.).
+*   **`/src/components`**: Reusable UI components (like `CourseModulesList`).
+*   **`/src/services`**: Axios-based API client methods communicating with the backend.

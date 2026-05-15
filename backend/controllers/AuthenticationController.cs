@@ -32,7 +32,7 @@ public class AuthenticationController : ControllerBase
         return Ok(result);
     }
 
-    [AllowAnonymous]
+    [Authorize(Roles = "Admin")]
     [HttpPost("register")]
     public async Task<ActionResult<LoginResponseDTO>> Register([FromBody] RegisterDTO dto)
     {

@@ -3,7 +3,6 @@ import { isAuthenticated, getCurrentUser } from "./services/authService";
 
 import NavBar from "./components/NavigationBar.jsx";
 import Login from "./pages/Login.jsx";
-import Register from "./pages/Register.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import InstructorDashboard from "./pages/InstructorDashboard.jsx";
 import StudentDashboard from "./pages/StudentDashboard.jsx";
@@ -33,8 +32,7 @@ function DashboardRedirect() {
 
 export default function App() {
   const location = useLocation();
-  const authPages = new Set(["/login", "/register"]);
-  const showNav = isAuthenticated() && !authPages.has(location.pathname);
+  const showNav = isAuthenticated() && location.pathname !== "/login";
 
   return (
     <>
@@ -44,7 +42,6 @@ export default function App() {
         <Routes>
           {/* Public */}
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
 
           {/* Protected — Dashboard Redirect */}
           <Route

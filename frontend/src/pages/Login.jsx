@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { login, saveAuthData } from "../services/authService";
 import toast from "react-hot-toast";
 import "./Auth.css";
@@ -111,28 +111,9 @@ export default function Login() {
           </form>
 
           <div className="auth-footer">
-            <p>
-              Don't have an account?{" "}
-              <Link to="/register" id="register-link">Create Account</Link>
+            <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
+              Contact your system administrator if you need an account.
             </p>
-          </div>
-
-          <div className="demo-credentials">
-            <h4>Demo Accounts</h4>
-            <div className="demo-grid">
-              <button type="button" className="demo-card" onClick={() => { setUsername("admin"); setPassword("admin123"); }}>
-                <span className="demo-role admin">Admin</span>
-                <span className="demo-user">admin / admin123</span>
-              </button>
-              <button type="button" className="demo-card" onClick={() => { setUsername("instructor1"); setPassword("inst123"); }}>
-                <span className="demo-role instructor">Instructor</span>
-                <span className="demo-user">instructor1 / inst123</span>
-              </button>
-              <button type="button" className="demo-card" onClick={() => { setUsername("user1"); setPassword("user123"); }}>
-                <span className="demo-role student">Student</span>
-                <span className="demo-user">user1 / user123</span>
-              </button>
-            </div>
           </div>
         </div>
       </div>

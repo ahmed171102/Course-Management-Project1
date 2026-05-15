@@ -234,7 +234,7 @@ export default function AdminDashboard() {
             <div className="data-list">
               {recentCourses.map((c) => (
                 <Link to={`/courses/${c.id}`} key={c.id} className="data-item" style={{ padding: 0, overflow: 'hidden' }}>
-                  <div style={{ height: 4px, width: '100%', background: getGradient(c.id) }}></div>
+                  <div style={{ height: 4, width: '100%', background: getGradient(c.id) }}></div>
                   <div style={{ padding: '16px' }}>
                     <div className="data-item-title">{c.title}</div>
                     <div className="data-item-meta">

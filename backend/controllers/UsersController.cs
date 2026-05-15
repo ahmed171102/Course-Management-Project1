@@ -49,6 +49,24 @@ public class UsersController : ControllerBase
         await _context.SaveChangesAsync();
         return Ok(new { user.Id, user.Username, user.Email, user.Role });
     }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteUser(string id)
+    {
+        // Get the current admin's username from the JWT claims
+        var currentUsername = User.Identity?.Name;
+        
+        var user = await _context.AppUsers.FindAsync(id);
+        if (user == null) return NotFound("User not found.");
+
+        // Prevent admin from deleting themselves
+        if (user.Username == currentUsername)
+            return BadRequest("You cannot delete your own account.");
+
+        _context.AppUsers.Remove(user);
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
 }
 
 public class UpdateUserDto

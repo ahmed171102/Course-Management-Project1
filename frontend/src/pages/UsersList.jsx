@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { getUsers, updateUser } from "../services/usersService";
+import { getUsers, updateUser, deleteUser } from "../services/usersService";
+import { register, getUsername } from "../services/authService";
+import ConfirmModal from "../components/ConfirmModal";
 import toast from "react-hot-toast";
 import "./FormPages.css";
 
@@ -12,6 +14,19 @@ export default function UsersList() {
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Create user form
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [createUsername, setCreateUsername] = useState("");
+  const [createEmail, setCreateEmail] = useState("");
+  const [createPassword, setCreatePassword] = useState("");
+  const [createRole, setCreateRole] = useState("User");
+  const [creating, setCreating] = useState(false);
+
+  // Delete modal
+  const [modalConfig, setModalConfig] = useState({ isOpen: false, title: "", message: "", onConfirm: null });
+
+  const currentUsername = getUsername();
 
   async function load() {
     setLoading(true);
@@ -53,6 +68,49 @@ export default function UsersList() {
     }
   }
 
+  async function handleCreateUser(e) {
+    e.preventDefault();
+    setCreating(true);
+    try {
+      await register(createUsername, createEmail, createPassword, createRole);
+      toast.success(`User "${createUsername}" created successfully!`);
+      setCreateUsername("");
+      setCreateEmail("");
+      setCreatePassword("");
+      setCreateRole("User");
+      setShowCreateForm(false);
+      await load();
+    } catch (err) {
+      const msg = err?.response?.data;
+      toast.error(typeof msg === "string" ? msg : "Failed to create user.");
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  function promptDeleteUser(u) {
+    setModalConfig({
+      isOpen: true,
+      title: "Delete User",
+      message: `Are you sure you want to permanently delete "${u.username}"? This action cannot be undone.`,
+      onConfirm: async () => {
+        setModalConfig({ ...modalConfig, isOpen: false });
+        await executeDeleteUser(u.id);
+      }
+    });
+  }
+
+  async function executeDeleteUser(id) {
+    try {
+      await deleteUser(id);
+      toast.success("User deleted successfully.");
+      await load();
+    } catch (err) {
+      const msg = err?.response?.data;
+      toast.error(typeof msg === "string" ? msg : "Failed to delete user.");
+    }
+  }
+
   return (
     <section className="dashboard animate-slide" style={{ maxWidth: 1000, margin: "0 auto" }}>
       <div className="dashboard-header" style={{ marginBottom: 24 }}>
@@ -60,10 +118,46 @@ export default function UsersList() {
           <h1>System Users</h1>
           <p className="dashboard-subtitle">Manage system accounts and credentials</p>
         </div>
-        <button type="button" className="btn btn-secondary" onClick={load}>
-          ↻ Refresh
-        </button>
+        <div style={{ display: "flex", gap: 12 }}>
+          <button type="button" className="btn btn-primary" onClick={() => setShowCreateForm(!showCreateForm)}>
+            {showCreateForm ? "Cancel" : "+ Create User"}
+          </button>
+          <button type="button" className="btn btn-secondary" onClick={load}>
+            ↻ Refresh
+          </button>
+        </div>
       </div>
+
+      {showCreateForm && (
+        <div className="form-card card" style={{ marginBottom: 24 }}>
+          <h3 style={{ marginBottom: 16 }}>Create New User</h3>
+          <form onSubmit={handleCreateUser} style={{ display: "flex", gap: 16, alignItems: "flex-end", flexWrap: "wrap" }}>
+            <div className="form-group" style={{ marginBottom: 0, flex: 1, minWidth: 160 }}>
+              <label>Username</label>
+              <input type="text" value={createUsername} onChange={e => setCreateUsername(e.target.value)} required minLength={3} />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0, flex: 1, minWidth: 200 }}>
+              <label>Email</label>
+              <input type="email" value={createEmail} onChange={e => setCreateEmail(e.target.value)} required />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0, flex: 1, minWidth: 160 }}>
+              <label>Password</label>
+              <input type="password" value={createPassword} onChange={e => setCreatePassword(e.target.value)} required minLength={6} />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0, minWidth: 130 }}>
+              <label>Role</label>
+              <select value={createRole} onChange={e => setCreateRole(e.target.value)} required>
+                <option value="User">Student</option>
+                <option value="Instructor">Instructor</option>
+                <option value="Admin">Admin</option>
+              </select>
+            </div>
+            <button type="submit" className="btn btn-primary" disabled={creating} style={{ height: 42 }}>
+              {creating ? "Creating..." : "Create"}
+            </button>
+          </form>
+        </div>
+      )}
 
       {loading && (
         <div className="loading-state">
@@ -96,9 +190,20 @@ export default function UsersList() {
                   <td style={{ ...tdStyle, color: "var(--text-muted)" }}>{u.email || "—"}</td>
                   <td style={tdStyle}><span className={`role-tag role-${(u.role || "").toLowerCase()}`}>{u.role}</span></td>
                   <td style={{ ...tdStyle, textAlign: "right" }}>
-                    <button className="btn btn-secondary" style={{ padding: "6px 12px", fontSize: "0.85rem" }} onClick={() => handleEditClick(u)}>
-                      Edit Credentials
-                    </button>
+                    <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                      <button className="btn btn-secondary" style={{ padding: "6px 12px", fontSize: "0.85rem" }} onClick={() => handleEditClick(u)}>
+                        Edit
+                      </button>
+                      {u.username !== currentUsername && (
+                        <button 
+                          className="btn btn-secondary" 
+                          style={{ padding: "6px 12px", fontSize: "0.85rem", color: "var(--danger)", borderColor: "var(--danger-bg)" }} 
+                          onClick={() => promptDeleteUser(u)}
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -143,6 +248,16 @@ export default function UsersList() {
           </div>
         </div>
       )}
+
+      <ConfirmModal 
+        isOpen={modalConfig.isOpen}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        onConfirm={modalConfig.onConfirm}
+        onCancel={() => setModalConfig({ ...modalConfig, isOpen: false })}
+        confirmText="Yes, Delete"
+        isDanger={true}
+      />
     </section>
   );
 }

@@ -29,7 +29,7 @@ export default function NavBar() {
 
   function handleLogout() {
     logout();
-    navigate("/login", { replace: true });
+    window.location.href = "/login";
   }
 
   return (
@@ -54,6 +54,9 @@ export default function NavBar() {
               </NavLink>
               <NavLink to="/instructors" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
                 Instructors
+              </NavLink>
+              <NavLink to="/students" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+                Students
               </NavLink>
               <NavLink to="/courses/new" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
                 Add Course

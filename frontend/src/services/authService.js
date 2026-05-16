@@ -5,7 +5,7 @@ export async function login(username, password) {
   return res.data;
 }
 
-export async function register(username, email, password, role = "User") {
+export async function register(username, email, password, role = "Student") {
   const res = await apiClient.post("/authentication/register", {
     username,
     email,
@@ -22,7 +22,7 @@ export async function changePassword(currentPassword, newPassword) {
 
 export function saveAuthData(data) {
   localStorage.setItem("accessToken", data.token);
-  localStorage.setItem("userRole", data.role || "User");
+  localStorage.setItem("userRole", data.role || "Student");
   localStorage.setItem("username", data.username || "");
   localStorage.setItem("userEmail", data.email || "");
 }

@@ -124,7 +124,7 @@ export default function CourseModulesList({ courseId, canEdit, isStudent }) {
       {canEdit && (
         <div className="card form-card" style={{ marginBottom: 24 }}>
           <h4>Add New Module</h4>
-          <form onSubmit={handleCreateModule} style={{ display: "flex", gap: 10, marginTop: 12 }}>
+          <form onSubmit={handleCreateModule} style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
             <input required placeholder="Module Title" value={newModuleTitle} onChange={e => setNewModuleTitle(e.target.value)} style={{ flex: 1, padding: 8 }} />
             <input placeholder="Description" value={newModuleDesc} onChange={e => setNewModuleDesc(e.target.value)} style={{ flex: 2, padding: 8 }} />
             <button className="btn btn-primary" type="submit">Add Module</button>
@@ -149,7 +149,7 @@ export default function CourseModulesList({ courseId, canEdit, isStudent }) {
                   <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Max: {assign.maxScore}</span>
                 </div>
                 
-                <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
+                <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
                   {canEdit && (
                     <>
                       <button className="btn btn-secondary" style={{ padding: "4px 8px", fontSize: 12 }} onClick={() => handleViewSubmissions(assign.id)}>
@@ -195,7 +195,7 @@ export default function CourseModulesList({ courseId, canEdit, isStudent }) {
             {canEdit && (
               <div style={{ marginTop: 12 }}>
                 {showAssignForm === mod.id ? (
-                  <form onSubmit={(e) => handleCreateAssignment(e, mod.id)} style={{ display: "flex", gap: 8 }}>
+                  <form onSubmit={(e) => handleCreateAssignment(e, mod.id)} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     <input required placeholder="Assignment Title" value={newAssignTitle} onChange={e => setNewAssignTitle(e.target.value)} style={{ padding: 6, flex: 1 }} />
                     <input required type="number" placeholder="Max Score" value={newAssignScore} onChange={e => setNewAssignScore(e.target.value)} style={{ padding: 6, width: 80 }} />
                     <button className="btn btn-primary" style={{ padding: "6px 12px", fontSize: 12 }} type="submit">Save</button>

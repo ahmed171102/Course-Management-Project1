@@ -20,7 +20,7 @@ export default function UsersList() {
   const [createUsername, setCreateUsername] = useState("");
   const [createEmail, setCreateEmail] = useState("");
   const [createPassword, setCreatePassword] = useState("");
-  const [createRole, setCreateRole] = useState("User");
+  const [createRole, setCreateRole] = useState("Student");
   const [creating, setCreating] = useState(false);
 
   // Delete modal
@@ -77,7 +77,7 @@ export default function UsersList() {
       setCreateUsername("");
       setCreateEmail("");
       setCreatePassword("");
-      setCreateRole("User");
+      setCreateRole("Student");
       setShowCreateForm(false);
       await load();
     } catch (err) {
@@ -147,7 +147,7 @@ export default function UsersList() {
             <div className="form-group" style={{ marginBottom: 0, minWidth: 130 }}>
               <label>Role</label>
               <select value={createRole} onChange={e => setCreateRole(e.target.value)} required>
-                <option value="User">Student</option>
+                <option value="Student">Student</option>
                 <option value="Instructor">Instructor</option>
                 <option value="Admin">Admin</option>
               </select>

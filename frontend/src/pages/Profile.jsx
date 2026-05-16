@@ -5,7 +5,7 @@ import "./FormPages.css";
 
 export default function Profile() {
   const user = getCurrentUser();
-  const role = (user.role || "User").toUpperCase();
+  const role = (user.role || "Student").toUpperCase();
   const initial = (user.username || "U")[0].toUpperCase();
 
   const [currentPassword, setCurrentPassword] = useState("");

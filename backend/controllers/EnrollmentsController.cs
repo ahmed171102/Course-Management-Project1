@@ -107,7 +107,7 @@ public class EnrollmentsController : ControllerBase
         var appUser = await _context.AppUsers.FirstOrDefaultAsync(u => u.Username == username);
         if (appUser == null) return Unauthorized();
 
-        var student = await _context.Students.FirstOrDefaultAsync(s => s.Email == appUser.Email);
+        var student = await _context.Students.FirstOrDefaultAsync(s => s.Email.ToLower() == appUser.Email.ToLower());
         if (student == null) return NotFound("Student profile not found.");
 
         var alreadyEnrolled = await _context.Enrollments.AnyAsync(e => e.StudentId == student.Id && e.CourseId == courseId);
@@ -126,7 +126,7 @@ public class EnrollmentsController : ControllerBase
         var appUser = await _context.AppUsers.FirstOrDefaultAsync(u => u.Username == username);
         if (appUser == null) return Unauthorized();
 
-        var student = await _context.Students.FirstOrDefaultAsync(s => s.Email == appUser.Email);
+        var student = await _context.Students.FirstOrDefaultAsync(s => s.Email.ToLower() == appUser.Email.ToLower());
         if (student == null) return NotFound("Student profile not found.");
 
         var enrollment = await _context.Enrollments.FindAsync(student.Id, courseId);

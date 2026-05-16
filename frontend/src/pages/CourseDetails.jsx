@@ -14,8 +14,9 @@ export default function CourseDetails() {
   const navigate = useNavigate();
   const user = getCurrentUser();
   const role = (user.role || "").toLowerCase();
-  const isStudent = role === "user" || role === "student";
-  const canEdit = role === "admin" || (role === "instructor" && course?.instructor?.email === user.email);
+  const isStudent = role === "student";
+  const isAdmin = role === "admin";
+  const isInstructor = role === "instructor";
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -57,6 +58,8 @@ export default function CourseDetails() {
       setLoading(false);
     }
   }
+
+  const canEdit = isAdmin || (isInstructor && course?.instructor?.email === user.email);
 
   useEffect(() => { load(); }, [id]);
 
@@ -380,8 +383,8 @@ export default function CourseDetails() {
             No students enrolled in this course yet.
           </p>
         ) : (
-          <div className="enrolled-students-table">
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <div className="enrolled-students-table" style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "500px" }}>
               <thead>
                 <tr style={{ borderBottom: "1px solid rgba(139, 92, 246, 0.2)" }}>
                   <th style={thStyle}>#</th>

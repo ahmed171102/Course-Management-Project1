@@ -67,7 +67,7 @@ public class AssignmentsController : ControllerBase
     }
 
     [HttpPost("assignments/{id}/submit")]
-    [Authorize(Roles = "User,Student")]
+    [Authorize(Roles = "Student")]
     public async Task<ActionResult> SubmitAssignment(int id, [FromBody] AssignmentSubmission dto)
     {
         var assignment = await _context.Assignments.FindAsync(id);

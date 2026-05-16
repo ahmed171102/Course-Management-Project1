@@ -10,14 +10,21 @@ import CoursesList from "./pages/CoursesList.jsx";
 import CourseCreate from "./pages/CourseCreate.jsx";
 import CourseDetails from "./pages/CourseDetails.jsx";
 import InstructorsList from "./pages/InstructorsList.jsx";
+import StudentsList from "./pages/StudentsList.jsx";
 import UsersList from "./pages/UsersList.jsx";
 import Profile from "./pages/Profile.jsx";
 
 import "./App.css";
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, adminOnly = false }) {
   if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;
+  }
+  if (adminOnly) {
+    const { role } = getCurrentUser();
+    if ((role || "").toLowerCase() !== "admin") {
+      return <Navigate to="/dashboard" replace />;
+    }
   }
   return children;
 }
@@ -91,7 +98,7 @@ export default function App() {
           <Route
             path="/courses/new"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute adminOnly>
                 <CourseCreate />
               </ProtectedRoute>
             }
@@ -105,12 +112,20 @@ export default function App() {
             }
           />
 
-          {/* Instructors (Admin Only handled by endpoint, but route protected) */}
+          {/* Instructors & Students (Admin Only handled by endpoint, but route protected) */}
           <Route
             path="/instructors"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute adminOnly>
                 <InstructorsList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/students"
+            element={
+              <ProtectedRoute adminOnly>
+                <StudentsList />
               </ProtectedRoute>
             }
           />
@@ -119,7 +134,7 @@ export default function App() {
           <Route
             path="/users"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute adminOnly>
                 <UsersList />
               </ProtectedRoute>
             }

@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
-import { getInstructors, createInstructor, deleteInstructor } from "../services/instructorsService";
+import { getStudents, createStudent, deleteStudent } from "../services/studentsService";
 import toast from "react-hot-toast";
 import ConfirmModal from "../components/ConfirmModal";
-import "./CoursesList.css"; // Reuse the grid CSS
+import "./CoursesList.css";
 
-export default function InstructorsList() {
-  const [instructors, setInstructors] = useState([]);
+export default function StudentsList() {
+  const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   // Create form state
   const [showForm, setShowForm] = useState(false);
-  const [name, setName] = useState("");
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [creating, setCreating] = useState(false);
 
@@ -22,10 +22,10 @@ export default function InstructorsList() {
     setLoading(true);
     setError("");
     try {
-      const data = await getInstructors();
-      setInstructors(data);
+      const data = await getStudents();
+      setStudents(data);
     } catch (err) {
-      setError(err?.response?.data || "Failed to load instructors.");
+      setError(err?.response?.data || "Failed to load students.");
     } finally {
       setLoading(false);
     }
@@ -37,14 +37,14 @@ export default function InstructorsList() {
     e.preventDefault();
     setCreating(true);
     try {
-      await createInstructor({ name, email });
-      toast.success("Instructor added successfully!");
-      setName("");
+      await createStudent({ fullName, email, enrollmentDate: new Date().toISOString() });
+      toast.success("Student added successfully!");
+      setFullName("");
       setEmail("");
       setShowForm(false);
       await load();
     } catch (err) {
-      toast.error(err?.response?.data || "Failed to add instructor.");
+      toast.error(err?.response?.data || "Failed to add student.");
     } finally {
       setCreating(false);
     }
@@ -53,7 +53,7 @@ export default function InstructorsList() {
   function promptDelete(id, name) {
     setModalConfig({
       isOpen: true,
-      title: "Delete Instructor",
+      title: "Delete Student",
       message: `Are you sure you want to delete ${name}?`,
       onConfirm: async () => {
         setModalConfig({ ...modalConfig, isOpen: false });
@@ -64,11 +64,11 @@ export default function InstructorsList() {
 
   async function executeDelete(id) {
     try {
-      await deleteInstructor(id);
-      toast.success("Instructor deleted.");
+      await deleteStudent(id);
+      toast.success("Student deleted.");
       await load();
     } catch {
-      toast.error("Cannot delete instructor (they may be assigned to a course).");
+      toast.error("Cannot delete student.");
     }
   }
 
@@ -76,12 +76,12 @@ export default function InstructorsList() {
     <section className="courses-page animate-slide">
       <div className="courses-header">
         <div>
-          <h1>Instructors Management</h1>
-          <p className="courses-subtitle">View and manage system instructors</p>
+          <h1>Students Management</h1>
+          <p className="courses-subtitle">View and manage system students</p>
         </div>
         <div className="courses-header-actions">
           <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
-            {showForm ? "Cancel" : "+ Add Instructor"}
+            {showForm ? "Cancel" : "+ Add Student"}
           </button>
           <button type="button" className="btn btn-secondary" onClick={load}>
             ↻ Refresh
@@ -91,18 +91,18 @@ export default function InstructorsList() {
 
       {showForm && (
         <div className="form-card card" style={{ marginBottom: 32 }}>
-          <h3 style={{ marginBottom: 16 }}>Add New Instructor</h3>
+          <h3 style={{ marginBottom: 16 }}>Add New Student</h3>
           <form onSubmit={handleCreate} style={{ display: "flex", gap: 16, alignItems: "flex-end", flexWrap: "wrap" }}>
             <div className="form-group" style={{ marginBottom: 0, flex: 1, minWidth: 200 }}>
-              <label>Name</label>
-              <input type="text" value={name} onChange={e => setName(e.target.value)} required />
+              <label>Full Name</label>
+              <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} required />
             </div>
             <div className="form-group" style={{ marginBottom: 0, flex: 1, minWidth: 200 }}>
               <label>Email</label>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
             </div>
             <button type="submit" className="btn btn-primary" disabled={creating} style={{ height: 42 }}>
-              {creating ? "Adding..." : "Save Instructor"}
+              {creating ? "Adding..." : "Save Student"}
             </button>
           </form>
         </div>
@@ -111,7 +111,7 @@ export default function InstructorsList() {
       {loading && (
         <div className="loading-state">
           <div className="spinner"></div>
-          <p>Loading instructors...</p>
+          <p>Loading students...</p>
         </div>
       )}
 
@@ -123,27 +123,27 @@ export default function InstructorsList() {
 
       {!loading && !error && (
         <ul className="courses-grid">
-          {instructors.map((instructor) => (
-            <li key={instructor.id} className="course-card">
+          {students.map((student) => (
+            <li key={student.id} className="course-card">
               <div className="course-card-body">
                 <div className="course-card-top">
                   <h3 className="course-title" style={{ color: "var(--text-primary)" }}>
-                    {instructor.name}
+                    {student.fullName}
                   </h3>
-                  <span className="badge badge-primary">ID: {instructor.id}</span>
+                  <span className="badge badge-primary">ID: {student.id}</span>
                 </div>
                 <div className="course-meta-info">
                   <div className="meta-row">
                     <span className="meta-label">Email</span>
-                    <span className="meta-value">{instructor.email}</span>
+                    <span className="meta-value">{student.email}</span>
                   </div>
                 </div>
                 <button 
-                  onClick={() => promptDelete(instructor.id, instructor.name)} 
+                  onClick={() => promptDelete(student.id, student.fullName)} 
                   className="btn btn-secondary" 
                   style={{ marginTop: "auto", alignSelf: "flex-start", color: "var(--danger)", borderColor: "var(--danger-bg)" }}
                 >
-                  Delete Instructor
+                  Delete Student
                 </button>
               </div>
             </li>

@@ -28,10 +28,10 @@ public class RegisterDTO
     public string Password { get; set; } = string.Empty;
 
     /// <summary>
-    /// Role must be one of: Admin, Instructor, User (Student).
-    /// Defaults to User if not provided.
+    /// Role must be one of: Admin, Instructor, Student.
+    /// Defaults to Student if not provided.
     /// </summary>
-    public string Role { get; set; } = "User";
+    public string Role { get; set; } = "Student";
 }
 
 public class LoginResponseDTO

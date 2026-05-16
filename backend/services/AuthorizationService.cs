@@ -71,9 +71,9 @@ public class AuthorizationService : IAuthorizationService
         }
 
         // Validate role
-        var validRoles = new[] { "Admin", "Instructor", "User" };
+        var validRoles = new[] { "Admin", "Instructor", "Student" };
         var role = validRoles.FirstOrDefault(r =>
-            string.Equals(r, registerDto.Role, StringComparison.OrdinalIgnoreCase)) ?? "User";
+            string.Equals(r, registerDto.Role, StringComparison.OrdinalIgnoreCase)) ?? "Student";
 
         var newUser = new AppUser
         {
@@ -85,6 +85,35 @@ public class AuthorizationService : IAuthorizationService
         };
 
         await _context.AppUsers.AddAsync(newUser);
+
+        if (role.Equals("Student", StringComparison.OrdinalIgnoreCase))
+        {
+            var existingStudent = await _context.Students.FirstOrDefaultAsync(s => s.Email == registerDto.Email);
+            if (existingStudent == null)
+            {
+                var student = new CourseManagement.Api.Models.Entities.Student
+                {
+                    FullName = registerDto.Username, // default to username, can be updated later
+                    Email = registerDto.Email,
+                    IsActive = true
+                };
+                await _context.Students.AddAsync(student);
+            }
+        }
+        else if (role.Equals("Instructor", StringComparison.OrdinalIgnoreCase))
+        {
+            var existingInstructor = await _context.Instructors.FirstOrDefaultAsync(i => i.Email == registerDto.Email);
+            if (existingInstructor == null)
+            {
+                var instructor = new CourseManagement.Api.Models.Entities.Instructor
+                {
+                    Name = registerDto.Username,
+                    Email = registerDto.Email,
+                    IsActive = true
+                };
+                await _context.Instructors.AddAsync(instructor);
+            }
+        }
 
         var expires = DateTime.UtcNow.AddHours(2);
         var refreshToken = await CreateAndSaveRefreshTokenAsync(newUser);
